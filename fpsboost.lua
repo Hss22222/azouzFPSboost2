@@ -1,30 +1,44 @@
--- طباعة رسالة عند بداية تنفيذ السكربت
-print("السكربت بدأ في التنفيذ!")
+-- متغير لتحديد حالة الطيران
+local flying = false
 
--- تشغيل العملية الأولى (زيادة FPS مثلاً)
-local function BoostFPS()
-    print("بدأت عملية تحسين FPS...")
-    
-    -- تعطيل التأثيرات غير الضرورية لتحسين الأداء
-    settings().Rendering.QualityLevel = Enum.QualityLevel.Level1
-    game:GetService("Lighting").GlobalShadows = false
-    game:GetService("Lighting").FogEnd = 9e9
+-- الحصول على اللاعب والشخصية
+local player = game.Players.LocalPlayer
+local character = player.Character or player.CharacterAdded:Wait()
 
-    -- تعطيل الأجزاء غير الضرورية من اللعبة
-    for _, v in pairs(game:GetDescendants()) do
-        if v:IsA("BasePart") then
-            v.Material = Enum.Material.Plastic
-        elseif v:IsA("Decal") or v:IsA("Texture") then
-            v:Destroy()
+-- وظيفة للطيران
+local function startFlying()
+    if not flying then
+        flying = true
+        print("الطيران مفعل!")
+        
+        -- إضافة جسم طائر إلى الشخصية (مثلاً BodyVelocity للطيران)
+        local bodyVelocity = Instance.new("BodyVelocity")
+        bodyVelocity.MaxForce = Vector3.new(400000, 400000, 400000)
+        bodyVelocity.Velocity = Vector3.new(0, 50, 0)  -- تعيين سرعة الطيران
+        bodyVelocity.Parent = character:WaitForChild("HumanoidRootPart")
+        
+        -- تعطيل الجاذبية
+        character:WaitForChild("Humanoid").PlatformStand = true
+    else
+        -- إيقاف الطيران
+        flying = false
+        print("الطيران معطل!")
+        
+        -- إزالة جسم الطيران
+        for _, v in pairs(character:WaitForChild("HumanoidRootPart"):GetChildren()) do
+            if v:IsA("BodyVelocity") then
+                v:Destroy()
+            end
         end
+        
+        -- إعادة الجاذبية
+        character:WaitForChild("Humanoid").PlatformStand = false
     end
-
-    print("تم تحسين FPS بنجاح!")
 end
 
--- تأكد من أن الوظيفة يتم تشغيلها
-BoostFPS()
-
--- تأخير 1 ثانية ثم طباعة رسالة
-wait(1)
-print("السكربت اكتمل بنجاح!")
+-- تنفيذ الطيران عند الضغط على مفتاح "F"
+game:GetService("UserInputService").InputBegan:Connect(function(input)
+    if input.KeyCode == Enum.KeyCode.F then
+        startFlying()
+    end
+end)
